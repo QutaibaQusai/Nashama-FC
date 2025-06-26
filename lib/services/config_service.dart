@@ -1,4 +1,4 @@
-// lib/services/config_service.dart - UPDATED: Always use remote URL, no local fallback
+// lib/services/config_service.dart - FIXED: Always use correct remote URL, enhanced debugging
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,7 +16,7 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
-  // Configuration URLs - REMOVED local config path
+  // 🔥 FIXED: Correct configuration URL
   static const String _defaultRemoteConfigUrl = 'https://mujeer.com/nashama-fc/config.php';
   static const String _cacheKey = 'cached_config';
   static const String _cacheTimestampKey = 'config_cache_timestamp';
@@ -29,7 +29,7 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
   String? _error;
   String? _dynamicConfigUrl;
   String? _userRole;
-  bool _hasNetworkError = false; // NEW: Track network connectivity
+  bool _hasNetworkError = false;
 
   AppConfigModel? get config => _config;
   bool get isLoading => _isLoading;
@@ -38,6 +38,110 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
   String? get currentConfigUrl => _dynamicConfigUrl ?? _defaultRemoteConfigUrl;
   String? get userRole => _userRole;
   bool get hasNetworkError => _hasNetworkError;
+
+  // 🆕 DEBUG: Add comprehensive debugging method
+  Future<void> debugConfigurationLoading() async {
+    try {
+      debugPrint('🔍 DEBUGGING CONFIGURATION LOADING');
+      debugPrint('==========================================');
+      
+      // 1. Check what URL we're actually using
+      await _loadSavedDynamicConfigUrl();
+      final String actualConfigUrl = _dynamicConfigUrl ?? _defaultRemoteConfigUrl;
+      debugPrint('📡 Config URL being used: $actualConfigUrl');
+      debugPrint('🔗 Default URL: $_defaultRemoteConfigUrl');
+      debugPrint('🔗 Dynamic URL: $_dynamicConfigUrl');
+      debugPrint('👤 User Role: ${_userRole ?? 'none'}');
+      
+      // 2. Check cache status
+      final cacheStatus = await getCacheStatus();
+      debugPrint('💾 Cache Status: $cacheStatus');
+      
+      // 3. Test direct HTTP request to your config URL
+      debugPrint('🌐 Testing direct HTTP request...');
+      try {
+        final response = await http.get(
+          Uri.parse(_defaultRemoteConfigUrl),
+          headers: {
+            'User-Agent': 'ERPForever-Flutter-App/1.0',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        ).timeout(const Duration(seconds: 10));
+        
+        debugPrint('📊 HTTP Response Status: ${response.statusCode}');
+        debugPrint('📊 HTTP Response Headers: ${response.headers}');
+        debugPrint('📊 HTTP Response Body (first 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+        
+        if (response.statusCode == 200) {
+          try {
+            final Map<String, dynamic> configJson = json.decode(response.body);
+            debugPrint('✅ JSON Parsing: SUCCESS');
+            debugPrint('🏠 First main icon title: ${configJson['main_icons']?[0]?['title']}');
+            debugPrint('🔗 First main icon link: ${configJson['main_icons']?[0]?['link']}');
+          } catch (e) {
+            debugPrint('❌ JSON Parsing ERROR: $e');
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ HTTP Request ERROR: $e');
+      }
+      
+      // 4. Check current loaded config
+      if (_config != null) {
+        debugPrint('📱 Current loaded config:');
+        debugPrint('   Language: ${_config!.lang}');
+        debugPrint('   Main icons count: ${_config!.mainIcons.length}');
+        if (_config!.mainIcons.isNotEmpty) {
+          debugPrint('   First icon: ${_config!.mainIcons[0].title}');
+          debugPrint('   First icon link: ${_config!.mainIcons[0].link}');
+        }
+        debugPrint('   Sheet icons count: ${_config!.sheetIcons.length}');
+      } else {
+        debugPrint('❌ No config currently loaded');
+      }
+      
+      debugPrint('==========================================');
+    } catch (e) {
+      debugPrint('❌ Debug process error: $e');
+    }
+  }
+
+  // 🆕 FIXED: Reset everything and reload from correct URL
+  Future<void> resetToCorrectConfig() async {
+    try {
+      debugPrint('🔄 RESETTING TO CORRECT CONFIGURATION');
+      
+      // Clear all cache and stored URLs
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_cacheKey);
+      await prefs.remove(_cacheTimestampKey);
+      await prefs.remove(_dynamicConfigUrlKey);
+      await prefs.remove(_userRoleKey);
+      
+      // Reset internal state
+      _config = null;
+      _dynamicConfigUrl = null;
+      _userRole = null;
+      _error = null;
+      _hasNetworkError = false;
+      
+      debugPrint('✅ All cache cleared, forcing reload from default URL');
+      
+      // Force reload with correct URL
+      await loadConfig();
+      
+      if (_config != null && _config!.mainIcons.isNotEmpty) {
+        debugPrint('✅ SUCCESS: Config reloaded. First link: ${_config!.mainIcons[0].link}');
+      } else {
+        debugPrint('❌ FAILED: Config not loaded properly');
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Reset error: $e');
+    }
+  }
 
   AppConfigModel _processConfigWithUserRole(AppConfigModel config, String? userRole) {
     if (userRole == null || userRole.trim().isEmpty) {
@@ -282,12 +386,12 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // UPDATED: Only try remote config, no fallbacks to local/default
+  // 🔥 FIXED: Enhanced loadConfig method that ensures correct URL is used
   Future<void> loadConfig([BuildContext? context]) async {
     try {
       _isLoading = true;
       _error = null;
-      _hasNetworkError = false; // Reset network error state
+      _hasNetworkError = false;
       notifyListeners();
 
       debugPrint('🔄 Starting configuration loading process (REMOTE ONLY)...');
@@ -295,11 +399,23 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
 
       await _loadSavedDynamicConfigUrl();
 
+      // 🔥 CRITICAL: Always use the correct default URL if no dynamic URL is set
+      final String configUrl = _dynamicConfigUrl ?? _defaultRemoteConfigUrl;
+      debugPrint('📡 Configuration URL being used: $configUrl');
+      
+      // 🔥 IMPORTANT: Log which URL type we're using
+      if (_dynamicConfigUrl == null) {
+        debugPrint('✅ Using DEFAULT remote config URL: $_defaultRemoteConfigUrl');
+      } else {
+        debugPrint('✅ Using DYNAMIC config URL: $_dynamicConfigUrl');
+      }
+
       // ONLY try remote config - no fallbacks
       bool remoteSuccess = await _tryLoadRemoteConfig(context);
 
       if (remoteSuccess) {
         debugPrint('✅ Remote configuration loaded successfully');
+        debugPrint('🔗 First main icon link: ${_config?.mainIcons.isNotEmpty == true ? _config!.mainIcons[0].link : 'N/A'}');
 
         if (_config != null && _userRole != null && _userRole!.isNotEmpty) {
           debugPrint('🔄 Processing config with stored user role: $_userRole');
@@ -328,9 +444,17 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  // 🔥 FIXED: Enhanced _tryLoadRemoteConfig to ensure correct URL usage
   Future<bool> _tryLoadRemoteConfig([BuildContext? context]) async {
     try {
+      // 🔥 CRITICAL: Use the exact URL you want
       String baseConfigUrl = _dynamicConfigUrl ?? _defaultRemoteConfigUrl;
+      
+      // 🔥 FORCE: If using default, make sure it's YOUR URL
+      if (_dynamicConfigUrl == null) {
+        baseConfigUrl = _defaultRemoteConfigUrl;
+        debugPrint('🔧 FORCED to use correct default URL: $baseConfigUrl');
+      }
 
       debugPrint('🌐 Fetching remote configuration from: $baseConfigUrl');
       debugPrint('👤 Will apply user role after loading: ${_userRole ?? 'none'}');
@@ -349,9 +473,12 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
 
       final response = await http
           .get(Uri.parse(enhancedConfigUrl), headers: headers)
-          .timeout(const Duration(seconds: 15)); // Increased timeout
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
+        debugPrint('✅ HTTP Response successful (${response.statusCode})');
+        debugPrint('📄 Response body length: ${response.body.length}');
+        
         final String configString = response.body;
         final Map<String, dynamic> configJson = json.decode(configString);
 
@@ -360,12 +487,21 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
         debugPrint('✅ Remote configuration parsed successfully');
         debugPrint('📱 Main Icons: ${_config!.mainIcons.length}');
         debugPrint('📋 Sheet Icons: ${_config!.sheetIcons.length}');
-        debugPrint('🌍 Direction: ${_config!.theme.direction}');
+        debugPrint('🌍 Direction: ${_config!.theme.direction ?? 'LTR'}');
         debugPrint('🔗 Config source: ${_dynamicConfigUrl != null ? 'DYNAMIC' : 'DEFAULT'}');
+        
+        // 🔥 VERIFY: Log the actual links we got
+        if (_config!.mainIcons.isNotEmpty) {
+          debugPrint('🏠 VERIFICATION - First main icon: ${_config!.mainIcons[0].title} -> ${_config!.mainIcons[0].link}');
+          for (int i = 0; i < _config!.mainIcons.length; i++) {
+            debugPrint('📱 Main Icon $i: ${_config!.mainIcons[i].title} -> ${_config!.mainIcons[i].link}');
+          }
+        }
 
         return true;
       } else {
         debugPrint('❌ Remote config HTTP ${response.statusCode}: ${response.reasonPhrase}');
+        debugPrint('📄 Response body: ${response.body}');
         return false;
       }
     } catch (e) {
@@ -475,10 +611,6 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
     return headers;
   }
 
-  // REMOVED: _tryLoadCachedConfig method
-  // REMOVED: _tryLoadLocalConfig method
-  // REMOVED: _loadDefaultConfig method
-
   Future<void> _cacheConfiguration() async {
     try {
       if (_config == null) return;
@@ -549,7 +681,7 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
 
   void updateConfig(AppConfigModel newConfig) {
     _config = newConfig;
-    _hasNetworkError = false; // Clear network error if config is updated
+    _hasNetworkError = false;
     notifyListeners();
     debugPrint('🔄 Configuration updated at runtime');
     _cacheConfiguration();
