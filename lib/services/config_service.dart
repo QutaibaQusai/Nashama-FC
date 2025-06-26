@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ERPForever/models/app_config_model.dart';
-import 'package:ERPForever/models/main_icon_model.dart';
-import 'package:ERPForever/models/header_icon_model.dart';
-import 'package:ERPForever/models/sheet_icon_model.dart';
-import 'package:ERPForever/services/app_data_service.dart';
+import 'package:nashama_fc/models/app_config_model.dart';
+import 'package:nashama_fc/models/main_icon_model.dart';
+import 'package:nashama_fc/models/header_icon_model.dart';
+import 'package:nashama_fc/models/sheet_icon_model.dart';
+import 'package:nashama_fc/services/app_data_service.dart';
 
 class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
   static final ConfigService _instance = ConfigService._internal();
@@ -17,7 +17,7 @@ class ConfigService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // Configuration URLs - REMOVED local config path
-  static const String _defaultRemoteConfigUrl = 'https://mobile.erpforever.com/config';
+  static const String _defaultRemoteConfigUrl = 'https://mujeer.com/nashama-fc/config.php';
   static const String _cacheKey = 'cached_config';
   static const String _cacheTimestampKey = 'config_cache_timestamp';
   static const String _dynamicConfigUrlKey = 'dynamic_config_url';

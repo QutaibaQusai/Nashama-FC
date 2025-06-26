@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:provider/provider.dart'; // ADD THIS IMPORT
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/webview_service.dart';
-import 'package:ERPForever/services/refresh_state_manager.dart'; // ADD THIS IMPORT
-import 'package:ERPForever/widgets/dynamic_navigation_icon.dart';
-import 'package:ERPForever/widgets/dynamic_icon.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/webview_service.dart';
+import 'package:nashama_fc/services/refresh_state_manager.dart'; // ADD THIS IMPORT
+import 'package:nashama_fc/widgets/dynamic_navigation_icon.dart';
+import 'package:nashama_fc/widgets/dynamic_icon.dart';
 
 class DynamicBottomNavigation extends StatelessWidget {
   final int selectedIndex;

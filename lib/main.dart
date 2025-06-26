@@ -1,18 +1,18 @@
 // lib/main.dart - COMPLETE: Enhanced with offline handling
-import 'package:ERPForever/services/refresh_state_manager.dart';
-import 'package:ERPForever/themes/dynamic_theme.dart';
-import 'package:ERPForever/widgets/connection_status_widget.dart';
-import 'package:ERPForever/widgets/screenshot_wrapper.dart';
+import 'package:nashama_fc/services/refresh_state_manager.dart';
+import 'package:nashama_fc/themes/dynamic_theme.dart';
+import 'package:nashama_fc/widgets/connection_status_widget.dart';
+import 'package:nashama_fc/widgets/screenshot_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/theme_service.dart';
-import 'package:ERPForever/services/auth_service.dart';
-import 'package:ERPForever/pages/main_screen.dart';
-import 'package:ERPForever/pages/login_page.dart';
-import 'package:ERPForever/pages/no_internet_page.dart';
-import 'package:ERPForever/services/internet_connection_service.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/theme_service.dart';
+import 'package:nashama_fc/services/auth_service.dart';
+import 'package:nashama_fc/pages/main_screen.dart';
+import 'package:nashama_fc/pages/login_page.dart';
+import 'package:nashama_fc/pages/no_internet_page.dart';
+import 'package:nashama_fc/services/internet_connection_service.dart';
 
 void main() async {
   // Preserve the native splash screen

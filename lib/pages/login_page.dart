@@ -1,13 +1,13 @@
 // lib/pages/login_page.dart - Updated with config URL support
-import 'package:ERPForever/pages/no_internet_page.dart';
-import 'package:ERPForever/services/internet_connection_service.dart';
+import 'package:nashama_fc/pages/no_internet_page.dart';
+import 'package:nashama_fc/services/internet_connection_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:ERPForever/widgets/loading_widget.dart';
-import 'package:ERPForever/pages/main_screen.dart';
-import 'package:ERPForever/services/auth_service.dart';
+import 'package:nashama_fc/widgets/loading_widget.dart';
+import 'package:nashama_fc/pages/main_screen.dart';
+import 'package:nashama_fc/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

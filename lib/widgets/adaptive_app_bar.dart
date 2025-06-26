@@ -1,9 +1,9 @@
 // lib/widgets/adaptive_app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/webview_service.dart';
-import 'package:ERPForever/widgets/header_icon_widget.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/webview_service.dart';
+import 'package:nashama_fc/widgets/header_icon_widget.dart';
 
 class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;

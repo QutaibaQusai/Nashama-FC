@@ -1,7 +1,7 @@
 // lib/models/app_config_model.dart - UPDATED: Added copyWith method
-import 'package:ERPForever/models/theme_config_model.dart';
-import 'package:ERPForever/models/main_icon_model.dart';
-import 'package:ERPForever/models/sheet_icon_model.dart';
+import 'package:nashama_fc/models/theme_config_model.dart';
+import 'package:nashama_fc/models/main_icon_model.dart';
+import 'package:nashama_fc/models/sheet_icon_model.dart';
 
 class AppConfigModel {
   final String lang;

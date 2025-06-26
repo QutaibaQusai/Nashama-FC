@@ -1,28 +1,28 @@
 // lib/pages/main_screen.dart - UPDATED: Preload other tabs after splash
 import 'dart:convert';
 
-import 'package:ERPForever/main.dart';
-import 'package:ERPForever/pages/no_internet_page.dart';
-import 'package:ERPForever/services/internet_connection_service.dart';
-import 'package:ERPForever/services/location_service.dart';
-import 'package:ERPForever/services/pull_to_refresh_service.dart';
+import 'package:nashama_fc/main.dart';
+import 'package:nashama_fc/pages/no_internet_page.dart';
+import 'package:nashama_fc/services/internet_connection_service.dart';
+import 'package:nashama_fc/services/location_service.dart';
+import 'package:nashama_fc/services/pull_to_refresh_service.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/webview_service.dart';
-import 'package:ERPForever/services/webview_controller_manager.dart';
-import 'package:ERPForever/services/theme_service.dart';
-import 'package:ERPForever/services/auth_service.dart';
-import 'package:ERPForever/widgets/dynamic_bottom_navigation.dart';
-import 'package:ERPForever/widgets/dynamic_app_bar.dart';
-import 'package:ERPForever/widgets/loading_widget.dart';
-import 'package:ERPForever/pages/barcode_scanner_page.dart';
-import 'package:ERPForever/pages/login_page.dart';
-import 'package:ERPForever/services/alert_service.dart';
-import 'package:ERPForever/services/refresh_state_manager.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/webview_service.dart';
+import 'package:nashama_fc/services/webview_controller_manager.dart';
+import 'package:nashama_fc/services/theme_service.dart';
+import 'package:nashama_fc/services/auth_service.dart';
+import 'package:nashama_fc/widgets/dynamic_bottom_navigation.dart';
+import 'package:nashama_fc/widgets/dynamic_app_bar.dart';
+import 'package:nashama_fc/widgets/loading_widget.dart';
+import 'package:nashama_fc/pages/barcode_scanner_page.dart';
+import 'package:nashama_fc/pages/login_page.dart';
+import 'package:nashama_fc/services/alert_service.dart';
+import 'package:nashama_fc/services/refresh_state_manager.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

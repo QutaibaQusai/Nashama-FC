@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/theme_service.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/theme_service.dart';
 
 class AppDataService {
   static final AppDataService _instance = AppDataService._internal();

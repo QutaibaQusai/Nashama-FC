@@ -1,7 +1,7 @@
 // lib/services/webview_controller_manager.dart
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:ERPForever/services/webview_service.dart';
+import 'package:nashama_fc/services/webview_service.dart';
 
 class WebViewControllerManager {
   static final WebViewControllerManager _instance = WebViewControllerManager._internal();

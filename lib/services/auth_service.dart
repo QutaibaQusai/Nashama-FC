@@ -1,7 +1,7 @@
 // lib/services/auth_service.dart - FIXED: Enhanced role processing and persistence
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ERPForever/services/config_service.dart';
+import 'package:nashama_fc/services/config_service.dart';
 
 class AuthService extends ChangeNotifier {
   static const String _isLoggedInKey = 'isLoggedIn';

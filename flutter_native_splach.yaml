@@ -1,14 +1,12 @@
 flutter_native_splash:
-  color: "#0078d7"
-  image: assets/ios_splach.png
-
-  android_12:
-    image: assets/splach2.png
-    color: "#0078d7"
-    
-  # Keep splash until manually removed
+  color: "#FFFFFF"
+  image: assets/splash/solash_screen_image.png
+  android: true
+  ios: true
+  fullscreen: true
   android_gravity: center
   ios_content_mode: center
-  
-  # Ensure splash stays until Flutter removes it
-  android_disable_fullscreen: false
+
+  android_12:
+    image: assets/splash/solash_screen_image.png
+    color: "#FFFFFF"

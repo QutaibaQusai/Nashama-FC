@@ -1,7 +1,7 @@
 // lib/themes/dynamic_theme.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ERPForever/models/app_config_model.dart';
+import 'package:nashama_fc/models/app_config_model.dart';
 
 class DynamicTheme {
   static ThemeData buildLightTheme(AppConfigModel? config) {

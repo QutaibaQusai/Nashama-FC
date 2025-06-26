@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
-        android:label="ERPForever"
+        android:label="Nashama FC"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         

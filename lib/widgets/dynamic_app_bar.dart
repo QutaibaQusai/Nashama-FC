@@ -1,9 +1,9 @@
 // lib/widgets/dynamic_app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ERPForever/services/config_service.dart';
-import 'package:ERPForever/services/webview_service.dart';
-import 'package:ERPForever/widgets/header_icon_widget.dart';
+import 'package:nashama_fc/services/config_service.dart';
+import 'package:nashama_fc/services/webview_service.dart';
+import 'package:nashama_fc/widgets/header_icon_widget.dart';
 
 class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
@@ -27,16 +27,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
   centerTitle: false,
   title: Padding(
     padding: const EdgeInsets.only(right: 10.0), 
-    child: selectedIndex == 0
-        ? SizedBox(
-            height: 20,
-            child: Image.asset(
-              isDarkMode
-                  ? "assets/erpforever-white.png"
-                  : "assets/header_icon.png",
-            ),
-          )
-        : _buildTitle(context, currentItem.title, titleColor),
+    child:  _buildTitle(context, currentItem.title, titleColor),
   ),
   actions: _buildActions(context, currentItem),
   backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,

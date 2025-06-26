@@ -1,7 +1,7 @@
 // lib/widgets/connection_status_widget.dart - MODERNIZED UI
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:ERPForever/services/internet_connection_service.dart';
+import 'package:nashama_fc/services/internet_connection_service.dart';
 
 class ConnectionStatusWidget extends StatelessWidget {
   final Widget child;

@@ -1,13 +1,13 @@
 // lib/pages/webview_page.dart - Working navigation + All services
-import 'package:ERPForever/services/pull_to_refresh_service.dart';
-import 'package:ERPForever/services/refresh_state_manager.dart';
+import 'package:nashama_fc/services/pull_to_refresh_service.dart';
+import 'package:nashama_fc/services/refresh_state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:ERPForever/services/webview_service.dart';
-import 'package:ERPForever/widgets/loading_widget.dart';
+import 'package:nashama_fc/services/webview_service.dart';
+import 'package:nashama_fc/widgets/loading_widget.dart';
 
 class WebViewPage extends StatefulWidget {
   final String url;

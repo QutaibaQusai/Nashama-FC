@@ -1,6 +1,6 @@
 // lib/widgets/dynamic_navigation_icon.dart
 import 'package:flutter/material.dart';
-import 'package:ERPForever/widgets/dynamic_icon.dart';
+import 'package:nashama_fc/widgets/dynamic_icon.dart';
 
 class DynamicNavigationIcon extends StatelessWidget {
   final String iconLineUrl;
