@@ -1,6 +1,6 @@
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/splash/solash_screen_image.png
+  image: assets/splash/splash.png
   android: true
   ios: true
   fullscreen: true

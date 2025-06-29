@@ -1,4 +1,4 @@
-// lib/main.dart - COMPLETE: Enhanced with offline handling
+// lib/main.dart - UPDATED: Direct to MainScreen without login
 import 'package:nashama_fc/services/refresh_state_manager.dart';
 import 'package:nashama_fc/themes/dynamic_theme.dart';
 import 'package:nashama_fc/widgets/connection_status_widget.dart';
@@ -10,7 +10,6 @@ import 'package:nashama_fc/services/config_service.dart';
 import 'package:nashama_fc/services/theme_service.dart';
 import 'package:nashama_fc/services/auth_service.dart';
 import 'package:nashama_fc/pages/main_screen.dart';
-import 'package:nashama_fc/pages/login_page.dart';
 import 'package:nashama_fc/pages/no_internet_page.dart';
 import 'package:nashama_fc/services/internet_connection_service.dart';
 
@@ -52,8 +51,8 @@ void main() async {
   // Load saved theme
   final savedTheme = await themeService.getSavedThemeMode();
 
-  // Check authentication state
-  final isLoggedIn = await authService.checkAuthState();
+  // 🆕 REMOVED: Authentication check - no longer needed
+  // final isLoggedIn = await authService.checkAuthState();
 
   // 🌐 Log initial internet status
   debugPrint('🌐 Initial internet status: ${internetService.isConnected}');
@@ -70,7 +69,6 @@ void main() async {
       ],
       child: MyApp(
         initialThemeMode: savedTheme, 
-        isLoggedIn: isLoggedIn,
         hasInternet: internetService.isConnected,
       ),
     ),
@@ -124,9 +122,7 @@ class SplashStateManager extends ChangeNotifier {
   }
 
   void _checkSplashRemoval() {
-    // 🔧 LOGIC: Remove splash if:
-    // 1. Minimum time has elapsed AND
-    // 2. (WebView is ready OR we have no internet)
+
     bool shouldRemove = _isMinTimeElapsed && 
                        (_isWebViewReady || !_hasInternet) && 
                        !_isSplashRemoved;
@@ -159,13 +155,11 @@ class SplashStateManager extends ChangeNotifier {
 
 class MyApp extends StatelessWidget {
   final String initialThemeMode;
-  final bool? isLoggedIn;
   final bool hasInternet;
 
   const MyApp({
     super.key, 
     required this.initialThemeMode, 
-    this.isLoggedIn,
     required this.hasInternet,
   });
 
@@ -185,7 +179,7 @@ class MyApp extends StatelessWidget {
           }
         });
 
-        final shouldShowMainScreen = isLoggedIn ?? authService.isLoggedIn;
+        // 🆕 SIMPLIFIED: Always go to MainScreen, no auth check needed
         final textDirection = configService.getTextDirection();
 
         // 🆕 Enhanced config loading with context after app is built
@@ -205,7 +199,7 @@ class MyApp extends StatelessWidget {
             darkTheme: DynamicTheme.buildDarkTheme(configService.config),
             home: ScreenshotWrapper(
               child: ConnectionStatusWidget(
-                child: _buildHomePage(internetService, shouldShowMainScreen),
+                child: _buildHomePage(internetService),
               ),
             ),
             builder: (context, widget) {
@@ -220,11 +214,11 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  // 🆕 NEW: Build home page based on internet status
-  Widget _buildHomePage(InternetConnectionService internetService, bool shouldShowMainScreen) {
+  // 🆕 SIMPLIFIED: Build home page based on internet status only
+  Widget _buildHomePage(InternetConnectionService internetService) {
     return Consumer<InternetConnectionService>(
       builder: (context, connectionService, _) {
-        debugPrint('🏠 Building home page - Internet: ${connectionService.isConnected}, Should show main: $shouldShowMainScreen');
+        debugPrint('🏠 Building home page - Internet: ${connectionService.isConnected}');
         
         // 🔧 PRIORITY: If no internet, always show no internet page
         if (!connectionService.isConnected) {
@@ -232,14 +226,9 @@ class MyApp extends StatelessWidget {
           return const NoInternetPage();
         }
         
-        // 🔧 If internet is available, show appropriate page based on auth status
-        if (shouldShowMainScreen) {
-          debugPrint('✅ Internet available + logged in - showing MainScreen');
-          return const MainScreen();
-        } else {
-          debugPrint('✅ Internet available + not logged in - showing LoginPage');
-          return const LoginPage();
-        }
+        // 🔧 SIMPLIFIED: If internet is available, always show MainScreen
+        debugPrint('✅ Internet available - showing MainScreen');
+        return const MainScreen();
       },
     );
   }

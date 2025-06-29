@@ -1,4 +1,3 @@
-// lib/services/auth_service.dart - FIXED: Enhanced role processing and persistence
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nashama_fc/services/config_service.dart';
@@ -6,7 +5,8 @@ import 'package:nashama_fc/services/config_service.dart';
 class AuthService extends ChangeNotifier {
   static const String _isLoggedInKey = 'isLoggedIn';
   
-  bool _isLoggedIn = false;
+  // 🆕 SIMPLIFIED: Always consider user as "logged in" since no login is required
+  bool _isLoggedIn = true;
   bool _isLoading = false;
   
   bool get isLoggedIn => _isLoggedIn;
@@ -21,25 +21,23 @@ class AuthService extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
       
-      final prefs = await SharedPreferences.getInstance();
-      _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
+      // 🆕 SIMPLIFIED: Always set as logged in, no need to check stored state
+      _isLoggedIn = true;
       
-      debugPrint('📱 Auth state loaded: isLoggedIn = $_isLoggedIn');
+      debugPrint('📱 Auth state loaded: isLoggedIn = $_isLoggedIn (always true - no login required)');
       
-      // 🆕 FIXED: Load and validate stored config URL and role
-      if (_isLoggedIn) {
-        await _validateStoredConfig();
-      }
+      // 🆕 OPTIONAL: Still validate stored config if available
+      await _validateStoredConfig();
     } catch (e) {
       debugPrint('❌ Error loading auth state: $e');
-      _isLoggedIn = false;
+      _isLoggedIn = true; // Still set to true even on error
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// 🆕 FIXED: Validate that stored config and role are still valid
+  /// 🆕 OPTIONAL: Validate that stored config is still valid (if any)
   Future<void> _validateStoredConfig() async {
     try {
       final configService = ConfigService();
@@ -59,43 +57,34 @@ class AuthService extends ChangeNotifier {
           await configService.loadConfig();
         }
       } else {
-        debugPrint('⚠️ No stored config URL found, user may need to re-login');
+        debugPrint('ℹ️ No stored config URL found, using default configuration');
       }
     } catch (e) {
       debugPrint('❌ Error validating stored config: $e');
     }
   }
 
-  /// 🆕 ENHANCED: Login with comprehensive config URL and role preservation
-  Future<void> login({String? configUrl, BuildContext? context}) async {
+  /// 🆕 OPTIONAL: Method to handle config URL updates (if needed for dynamic configs)
+  Future<void> updateConfig({String? configUrl, BuildContext? context}) async {
     try {
-      debugPrint('🔄 Processing login with enhanced role preservation...');
+      debugPrint('🔄 Processing config update...');
       if (configUrl != null) {
-        debugPrint('🔗 Login includes config URL: $configUrl');
-      }
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_isLoggedInKey, true);
-      
-      _isLoggedIn = true;
-      
-      if (configUrl != null) {
-        await _handleConfigUrlWithEnhancedRolePreservation(configUrl, context);
+        debugPrint('🔗 Config update includes URL: $configUrl');
+        await _handleConfigUrlUpdate(configUrl, context);
       }
       
       notifyListeners();
       
-      debugPrint('✅ User logged in with enhanced role preservation completed');
+      debugPrint('✅ Config update completed');
     } catch (e) {
-      debugPrint('❌ Error during enhanced login: $e');
-      _isLoggedIn = true;
+      debugPrint('❌ Error during config update: $e');
       notifyListeners();
     }
   }
 
-  Future<void> _handleConfigUrlWithEnhancedRolePreservation(String configUrl, [BuildContext? context]) async {
+  Future<void> _handleConfigUrlUpdate(String configUrl, [BuildContext? context]) async {
     try {
-      debugPrint('🔗 Processing config URL with enhanced role preservation: $configUrl');
+      debugPrint('🔗 Processing config URL update: $configUrl');
       
       final parsedData = ConfigService.parseLoginConfigUrl(configUrl);
       
@@ -106,122 +95,44 @@ class AuthService extends ChangeNotifier {
         debugPrint('✅ Extracted config URL: $fullConfigUrl');
         debugPrint('👤 Extracted user role: ${userRole ?? 'not specified'}');
         
-        // 🆕 CRITICAL: Validate role before proceeding
-        if (userRole == null || userRole.trim().isEmpty) {
-          debugPrint('⚠️ Warning: No role found in login URL, empty user-role parameters will remain empty');
-        } else {
-          debugPrint('✅ Valid role found: ${userRole.trim()}');
-        }
-        
         await ConfigService().setDynamicConfigUrl(
           fullConfigUrl,
           role: userRole?.trim(),
         );
         
         if (context != null) {
-          debugPrint('🔄 Immediately reloading configuration with role processing...');
+          debugPrint('🔄 Immediately reloading configuration...');
           await ConfigService().loadConfig(context);
-          
-          await _validateRoleApplication(userRole?.trim());
-          
-          debugPrint('✅ Configuration reloaded with user role applied to all URLs');
-        } else {
-          debugPrint('⚠️ No context provided, role will be applied on next config load');
+          debugPrint('✅ Configuration reloaded with role processing');
         }
         
-        debugPrint('🎉 Login with comprehensive role preservation completed successfully');
+        debugPrint('🎉 Config update completed successfully');
       } else {
         debugPrint('⚠️ Failed to parse config URL, using default configuration');
       }
     } catch (e) {
-      debugPrint('❌ Error handling config URL with enhanced role preservation: $e');
+      debugPrint('❌ Error handling config URL update: $e');
     }
   }
 
-  Future<void> _validateRoleApplication(String? expectedRole) async {
+  /// 🆕 OPTIONAL: Method to clear dynamic config (if needed)
+  Future<void> clearDynamicConfig() async {
     try {
-      if (expectedRole == null || expectedRole.isEmpty) {
-        debugPrint('⚠️ No role to validate');
-        return;
-      }
-
-      final config = ConfigService().config;
-      if (config == null) {
-        debugPrint('❌ No config available for role validation');
-        return;
-      }
-
-      debugPrint('🔍 Validating role application in URLs...');
-
-      // Check main icons
-      for (int i = 0; i < config.mainIcons.length; i++) {
-        final mainIcon = config.mainIcons[i];
-        if (mainIcon.link.contains('user-role=')) {
-          final uri = Uri.parse(mainIcon.link);
-          final roleInUrl = uri.queryParameters['user-role'];
-          
-          if (roleInUrl == expectedRole) {
-            debugPrint('✅ Main icon $i (${mainIcon.title}): Role correctly applied ($roleInUrl)');
-          } else if (roleInUrl == null || roleInUrl.isEmpty) {
-            debugPrint('❌ Main icon $i (${mainIcon.title}): Role NOT applied - user-role is empty');
-          } else {
-            debugPrint('⚠️ Main icon $i (${mainIcon.title}): Different role found ($roleInUrl vs $expectedRole)');
-          }
-        } else {
-          debugPrint('ℹ️ Main icon $i (${mainIcon.title}): No user-role parameter in URL');
-        }
-      }
-
-      // Check sheet icons
-      for (int i = 0; i < config.sheetIcons.length; i++) {
-        final sheetIcon = config.sheetIcons[i];
-        if (sheetIcon.link.contains('user-role=')) {
-          final uri = Uri.parse(sheetIcon.link);
-          final roleInUrl = uri.queryParameters['user-role'];
-          
-          if (roleInUrl == expectedRole) {
-            debugPrint('✅ Sheet icon $i (${sheetIcon.title}): Role correctly applied ($roleInUrl)');
-          } else if (roleInUrl == null || roleInUrl.isEmpty) {
-            debugPrint('❌ Sheet icon $i (${sheetIcon.title}): Role NOT applied - user-role is empty');
-          } else {
-            debugPrint('⚠️ Sheet icon $i (${sheetIcon.title}): Different role found ($roleInUrl vs $expectedRole)');
-          }
-        }
-      }
-
-      debugPrint('✅ Role validation completed');
-    } catch (e) {
-      debugPrint('❌ Error during role validation: $e');
-    }
-  }
-
-  /// Updated logout to clear dynamic config URL and role
-  Future<void> logout() async {
-    try {
-      debugPrint('🔄 Attempting to clear login state, user role, and stored config...');
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_isLoggedInKey, false);
-      
-      _isLoggedIn = false;
-      
+      debugPrint('🔄 Clearing dynamic configuration...');
       await ConfigService().clearDynamicConfigUrl();
-      
-      notifyListeners();
-      
-      debugPrint('✅ User logged out, state cleared, role removed, and config reset');
+      debugPrint('✅ Dynamic configuration cleared');
     } catch (e) {
-      debugPrint('❌ Error clearing login state: $e');
-      _isLoggedIn = false;
-      notifyListeners();
+      debugPrint('❌ Error clearing dynamic config: $e');
     }
   }
 
+  /// 🆕 SIMPLIFIED: Check auth state (always returns true now)
   Future<bool> checkAuthState() async {
     await _loadAuthState();
-    return _isLoggedIn;
+    return _isLoggedIn; // Always true
   }
 
+  /// 🆕 OPTIONAL: Method to set user config URL manually (if needed)
   Future<void> setUserConfigUrl(String configUrl, {String? role}) async {
     try {
       debugPrint('🔗 Manually setting user config URL with role: $configUrl');
@@ -229,16 +140,13 @@ class AuthService extends ChangeNotifier {
       
       await ConfigService().setDynamicConfigUrl(configUrl, role: role?.trim());
       
-      if (role != null && role.trim().isNotEmpty) {
-        await _validateRoleApplication(role.trim());
-      }
-      
       debugPrint('✅ User config URL and role set successfully');
     } catch (e) {
       debugPrint('❌ Error setting user config URL: $e');
     }
   }
 
+  /// 🆕 Get current config information
   Map<String, String?> getUserConfigInfo() {
     final configService = ConfigService();
     final info = {
@@ -253,6 +161,7 @@ class AuthService extends ChangeNotifier {
     return info;
   }
 
+  /// 🆕 OPTIONAL: Refresh config with stored role
   Future<void> refreshConfigWithStoredRole([BuildContext? context]) async {
     try {
       debugPrint('🔄 Refreshing config with stored role...');
@@ -263,10 +172,9 @@ class AuthService extends ChangeNotifier {
       if (currentRole != null && currentRole.isNotEmpty) {
         debugPrint('👤 Using stored role: $currentRole');
         await configService.loadConfig(context);
-        await _validateRoleApplication(currentRole);
         debugPrint('✅ Config refreshed with stored role applied');
       } else {
-        debugPrint('⚠️ No stored role found, loading config without role processing');
+        debugPrint('ℹ️ No stored role found, loading config without role processing');
         await configService.loadConfig(context);
       }
       
@@ -275,6 +183,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// 🆕 Check if we have valid role configuration
   bool hasValidRoleConfiguration() {
     final configService = ConfigService();
     final hasRole = configService.userRole != null && configService.userRole!.isNotEmpty;
@@ -284,6 +193,22 @@ class AuthService extends ChangeNotifier {
     debugPrint('   Has role: $hasRole (${configService.userRole ?? 'none'})');
     debugPrint('   Has config: $hasConfig');
     
-    return hasRole && hasConfig;
+    return hasConfig; // Only check config, not role since login is not required
+  }
+
+  /// 🆕 OPTIONAL: Reset method (if needed for debugging or special cases)
+  Future<void> reset() async {
+    try {
+      debugPrint('🔄 Resetting auth service...');
+      
+      _isLoggedIn = true; // Always keep as true
+      await clearDynamicConfig();
+      
+      notifyListeners();
+      
+      debugPrint('✅ Auth service reset completed');
+    } catch (e) {
+      debugPrint('❌ Error resetting auth service: $e');
+    }
   }
 }

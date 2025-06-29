@@ -7,7 +7,6 @@ import 'package:nashama_fc/services/internet_connection_service.dart';
 import 'package:nashama_fc/services/location_service.dart';
 import 'package:nashama_fc/services/pull_to_refresh_service.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -1123,11 +1122,11 @@ class _MainScreenState extends State<MainScreen>
       return NavigationDecision.prevent;
     }
 
-    // Auth requests
-    if (request.url.startsWith('logout://')) {
-      _handleLogoutRequest();
-      return NavigationDecision.prevent;
-    }
+    // // Auth requests
+    // if (request.url.startsWith('logout://')) {
+    //   _handleLogoutRequest();
+    //   return NavigationDecision.prevent;
+    // }
 
     // Location requests
     // Location requests
@@ -1757,59 +1756,11 @@ class _MainScreenState extends State<MainScreen>
   ''');
   }
 
-  void _handleLogoutRequest() {
-    debugPrint('🚪 Logout requested from WebView');
-    _performLogout();
-  }
+  // void _handleLogoutRequest() {
+  //   debugPrint('🚪 Logout requested from WebView');
+  //   _performLogout();
+  // }
 
-  void _performLogout() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.logout();
-
-      debugPrint('✅ User logged out successfully');
-
-      // Use web scripts instead of native SnackBar
-      final controller = _controllerManager.getController(
-        _selectedIndex,
-        '',
-        context,
-      );
-      controller.runJavaScript('''
-      if (window.ToastManager) {
-        window.ToastManager.postMessage('toast://' + encodeURIComponent('Logged out successfully'));
-      } else {
-        window.location.href = 'toast://' + encodeURIComponent('Logged out successfully');
-      }
-    ''');
-
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      debugPrint('❌ Error during logout: $e');
-
-      // Use web scripts instead of native SnackBar
-      if (mounted) {
-        final controller = _controllerManager.getController(
-          _selectedIndex,
-          '',
-          context,
-        );
-        controller.runJavaScript('''
-        const errorMessage = 'Error during logout';
-        if (window.AlertManager) {
-          window.AlertManager.postMessage('alert://' + encodeURIComponent(errorMessage));
-        } else {
-          window.location.href = 'alert://' + encodeURIComponent(errorMessage);
-        }
-      ''');
-      }
-    }
-  }
 
   void _handleThemeChangeRequest(String url) {
     String themeMode = 'system';
@@ -1907,51 +1858,111 @@ class _MainScreenState extends State<MainScreen>
   ''');
   }
 
-  void _handleNewWebNavigation(String url) {
-    // FIXED: Changed default URL to mobile.erpforever.com
-    String targetUrl = 'https://mobile.erpforever.com/';
+void _handleNewWebNavigation(String url) {
+  debugPrint('🌐 MainScreen: Opening new WebView from: $url');
 
-    if (url.contains('?')) {
+  String targetUrl = 'https://mobile.erpforever.com/';
+  String title = 'Web View'; // Default title
+
+  try {
+    if (url.startsWith('new-web://')) {
+      // Remove the protocol
+      String cleanUrl = url.replaceFirst('new-web://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ MainScreen extracted title: $title');
+          debugPrint('🔗 MainScreen extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+    }
+
+    // Fallback: try old query parameter method
+    if (!url.contains(';') && url.contains('?')) {
       try {
         Uri uri = Uri.parse(url.replaceFirst('new-web://', 'https://'));
         if (uri.queryParameters.containsKey('url')) {
           targetUrl = uri.queryParameters['url']!;
         }
-      } catch (e) {
-        debugPrint("Error parsing URL parameters: $e");
-      }
-    }
-
-    WebViewService().navigate(
-      context,
-      url: targetUrl,
-      linkType: 'regular_webview',
-      title: 'Web View',
-    );
-  }
-
-  void _handleSheetNavigation(String url) {
-    String targetUrl = 'https://mujeer.com';
-
-    if (url.contains('?')) {
-      try {
-        Uri uri = Uri.parse(url.replaceFirst('new-sheet://', 'https://'));
-        if (uri.queryParameters.containsKey('url')) {
-          targetUrl = uri.queryParameters['url']!;
+        if (uri.queryParameters.containsKey('title')) {
+          title = uri.queryParameters['title']!;
         }
       } catch (e) {
         debugPrint("Error parsing URL parameters: $e");
       }
     }
-
-    WebViewService().navigate(
-      context,
-      url: targetUrl,
-      linkType: 'sheet_webview',
-      title: 'Web View',
-    );
+  } catch (e) {
+    debugPrint('❌ Error parsing new-web URL in MainScreen: $e');
   }
 
+  debugPrint('✅ MainScreen opening new WebView with URL: $targetUrl, Title: $title');
+
+  WebViewService().navigate(
+    context,
+    url: targetUrl,
+    linkType: 'regular_webview',
+    title: title,
+  );
+}
+
+ void _handleSheetNavigation(String url) {
+  debugPrint('📋 MainScreen: Opening sheet from: $url');
+
+  String targetUrl = 'https://mobile.erpforever.com/';
+  String title = 'Web View'; // Default title
+
+  try {
+    if (url.startsWith('new-sheet://')) {
+      // Remove the protocol
+      String cleanUrl = url.replaceFirst('new-sheet://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ MainScreen sheet extracted title: $title');
+          debugPrint('🔗 MainScreen sheet extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+    }
+
+    // Fallback: try old query parameter method
+    if (!url.contains(';') && url.contains('?')) {
+      try {
+        Uri uri = Uri.parse(url.replaceFirst('new-sheet://', 'https://'));
+        if (uri.queryParameters.containsKey('url')) {
+          targetUrl = uri.queryParameters['url']!;
+        }
+        if (uri.queryParameters.containsKey('title')) {
+          title = uri.queryParameters['title']!;
+        }
+      } catch (e) {
+        debugPrint("Error parsing URL parameters: $e");
+      }
+    }
+  } catch (e) {
+    debugPrint('❌ Error parsing new-sheet URL in MainScreen: $e');
+  }
+
+  debugPrint('✅ MainScreen opening sheet with URL: $targetUrl, Title: $title');
+
+  WebViewService().navigate(
+    context,
+    url: targetUrl,
+    linkType: 'sheet_webview',
+    title: title,
+  );
+}
   void _handleBarcodeScanning(String url) {
     debugPrint("Barcode scanning triggered: $url");
 

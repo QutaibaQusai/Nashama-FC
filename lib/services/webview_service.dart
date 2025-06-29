@@ -103,13 +103,13 @@ class WebViewService {
           _handleThemeChange(message.message);
         },
       )
-      ..addJavaScriptChannel(
-        'AuthManager',
-        onMessageReceived: (JavaScriptMessage message) {
-          debugPrint('🚪 Auth message: ${message.message}');
-          _handleAuthRequest(message.message);
-        },
-      )
+      // ..addJavaScriptChannel(
+      //   'AuthManager',
+      //   onMessageReceived: (JavaScriptMessage message) {
+      //     debugPrint('🚪 Auth message: ${message.message}');
+      //     _handleAuthRequest(message.message);
+      //   },
+      // )
       ..addJavaScriptChannel(
         'LocationManager',
         onMessageReceived: (JavaScriptMessage message) {
@@ -524,82 +524,194 @@ void _handleToastRequest(String message) {
     return headers;
   }
 
-  NavigationDecision _handleNavigationRequest(NavigationRequest request) {
-    debugPrint('🔍 Handling navigation request: ${request.url}');
-    // NEW: Handle loggedin:// protocol for config updates
-    if (request.url.startsWith('loggedin://')) {
-      _handleLoginConfigRequest(request.url);
-      return NavigationDecision.prevent;
-    }
-    if (request.url.startsWith('toast://')) {
-      _handleToastRequest(request.url);
-      return NavigationDecision.prevent;
-    }
-    // Handle theme requests
-    if (request.url.startsWith('dark-mode://')) {
-      _handleThemeChange('dark');
-      return NavigationDecision.prevent;
-    }
-    // Handle theme requests
-    if (request.url.startsWith('dark-mode://')) {
-      _handleThemeChange('dark');
-      return NavigationDecision.prevent;
-    } else if (request.url.startsWith('light-mode://')) {
-      _handleThemeChange('light');
-      return NavigationDecision.prevent;
-    } else if (request.url.startsWith('system-mode://')) {
-      _handleThemeChange('system');
-      return NavigationDecision.prevent;
-    }
-    // Handle auth requests
-    else if (request.url.startsWith('logout://')) {
-      _handleAuthRequest('logout');
-      return NavigationDecision.prevent;
-    }
-    // Handle location requests
-    else if (request.url.startsWith('get-location://')) {
-      _handleLocationRequest('getCurrentLocation');
-      return NavigationDecision.prevent;
-    }
-    // Handle contacts requests
-    else if (request.url.startsWith('get-contacts://')) {
-      _handleContactsRequest('getAllContacts');
-      return NavigationDecision.prevent;
-    }
-    // Handle screenshot requests
-    else if (request.url.startsWith('take-screenshot://')) {
-      _handleScreenshotRequest('takeScreenshot');
-      return NavigationDecision.prevent;
-    }
-    // Handle image save requests
-    else if (request.url.startsWith('save-image://')) {
-      _handleImageSaveRequest(request.url);
-      return NavigationDecision.prevent;
-    } else if (request.url.startsWith('save-pdf://')) {
-      _handlePdfSaveRequest(request.url);
-      return NavigationDecision.prevent;
-    }
-    // Handle alert requests - ADD THIS SECTION
-    if (request.url.startsWith('alert://')) {
-      _handleAlertRequest(request.url);
-      return NavigationDecision.prevent;
-    } else if (request.url.startsWith('confirm://')) {
-      _handleAlertRequest(request.url);
-      return NavigationDecision.prevent;
-    } else if (request.url.startsWith('prompt://')) {
-      _handleAlertRequest(request.url);
-      return NavigationDecision.prevent;
-    }
-    // Handle barcode requests
-    else if (request.url.contains('barcode') || request.url.contains('scan')) {
-      bool isContinuous = request.url.contains('continuous');
-      _handleBarcodeRequest(isContinuous ? 'scanContinuous' : 'scan');
-      return NavigationDecision.prevent;
+  
+NavigationDecision _handleNavigationRequest(NavigationRequest request) {
+  debugPrint('🔍 Handling navigation request: ${request.url}');
+  
+  // NEW: Handle loggedin:// protocol for config updates
+  if (request.url.startsWith('loggedin://')) {
+    _handleLoginConfigRequest(request.url);
+    return NavigationDecision.prevent;
+  }
+  if (request.url.startsWith('toast://')) {
+    _handleToastRequest(request.url);
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle theme requests
+  if (request.url.startsWith('dark-mode://')) {
+    _handleThemeChange('dark');
+    return NavigationDecision.prevent;
+  } else if (request.url.startsWith('light-mode://')) {
+    _handleThemeChange('light');
+    return NavigationDecision.prevent;
+  } else if (request.url.startsWith('system-mode://')) {
+    _handleThemeChange('system');
+    return NavigationDecision.prevent;
+  }
+  
+  // // Handle auth requests
+  // else if (request.url.startsWith('logout://')) {
+  //   _handleAuthRequest('logout');
+  //   return NavigationDecision.prevent;
+  // }
+  
+  // Handle location requests
+  else if (request.url.startsWith('get-location://')) {
+    _handleLocationRequest('getCurrentLocation');
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle contacts requests
+  else if (request.url.startsWith('get-contacts://')) {
+    _handleContactsRequest('getAllContacts');
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle screenshot requests
+  else if (request.url.startsWith('take-screenshot://')) {
+    _handleScreenshotRequest('takeScreenshot');
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle image save requests
+  else if (request.url.startsWith('save-image://')) {
+    _handleImageSaveRequest(request.url);
+    return NavigationDecision.prevent;
+  } else if (request.url.startsWith('save-pdf://')) {
+    _handlePdfSaveRequest(request.url);
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle alert requests
+  if (request.url.startsWith('alert://')) {
+    _handleAlertRequest(request.url);
+    return NavigationDecision.prevent;
+  } else if (request.url.startsWith('confirm://')) {
+    _handleAlertRequest(request.url);
+    return NavigationDecision.prevent;
+  } else if (request.url.startsWith('prompt://')) {
+    _handleAlertRequest(request.url);
+    return NavigationDecision.prevent;
+  }
+  
+  // 🔧 UPDATED: Handle new-web:// requests with title support
+  else if (request.url.startsWith('new-web://')) {
+    String targetUrl = 'https://mobile.erpforever.com/';
+    String title = 'Web View'; // Default title
+
+    try {
+      // Remove the protocol
+      String cleanUrl = request.url.replaceFirst('new-web://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ WebViewService extracted title: $title');
+          debugPrint('🔗 WebViewService extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+
+      // Fallback: try old query parameter method if no semicolon found
+      if (!request.url.contains(';') && request.url.contains('?')) {
+        try {
+          Uri uri = Uri.parse(request.url.replaceFirst('new-web://', 'https://'));
+          if (uri.queryParameters.containsKey('url')) {
+            targetUrl = uri.queryParameters['url']!;
+          }
+          if (uri.queryParameters.containsKey('title')) {
+            title = uri.queryParameters['title']!;
+          }
+        } catch (e) {
+          debugPrint("Error parsing URL parameters: $e");
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ WebViewService error parsing new-web URL: $e');
     }
 
-    return NavigationDecision.navigate;
+    debugPrint('✅ WebViewService opening new WebView with URL: $targetUrl, Title: $title');
+
+    // Navigate to WebViewPage with extracted title
+    if (_currentContext != null) {
+      Navigator.push(
+        _currentContext!,
+        MaterialPageRoute(
+          builder: (context) => WebViewPage(url: targetUrl, title: title),
+        ),
+      );
+    }
+    return NavigationDecision.prevent;
+  }
+  
+  // 🔧 UPDATED: Handle new-sheet:// requests with title support
+  else if (request.url.startsWith('new-sheet://')) {
+    String targetUrl = 'https://mobile.erpforever.com/';
+    String title = 'Web View'; // Default title
+
+    try {
+      // Remove the protocol
+      String cleanUrl = request.url.replaceFirst('new-sheet://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ WebViewService sheet extracted title: $title');
+          debugPrint('🔗 WebViewService sheet extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+
+      // Fallback: try old query parameter method if no semicolon found
+      if (!request.url.contains(';') && request.url.contains('?')) {
+        try {
+          Uri uri = Uri.parse(request.url.replaceFirst('new-sheet://', 'https://'));
+          if (uri.queryParameters.containsKey('url')) {
+            targetUrl = uri.queryParameters['url']!;
+          }
+          if (uri.queryParameters.containsKey('title')) {
+            title = uri.queryParameters['title']!;
+          }
+        } catch (e) {
+          debugPrint("Error parsing URL parameters: $e");
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ WebViewService error parsing new-sheet URL: $e');
+    }
+
+    debugPrint('✅ WebViewService opening sheet with URL: $targetUrl, Title: $title');
+
+    // Navigate to sheet with extracted title
+    if (_currentContext != null) {
+      navigate(
+        _currentContext!,
+        url: targetUrl,
+        linkType: 'sheet_webview',
+        title: title,
+      );
+    }
+    return NavigationDecision.prevent;
+  }
+  
+  // Handle barcode requests
+  else if (request.url.contains('barcode') || request.url.contains('scan')) {
+    bool isContinuous = request.url.contains('continuous');
+    _handleBarcodeRequest(isContinuous ? 'scanContinuous' : 'scan');
+    return NavigationDecision.prevent;
   }
 
+  return NavigationDecision.navigate;
+}
   void _handleAlertRequest(String message) async {
     if (_currentContext == null) {
       debugPrint('❌ No context available for alert request');
@@ -1501,76 +1613,76 @@ void _handleToastRequest(String message) {
     // REMOVED: All native SnackBar code
   }
 
-  void _handleAuthRequest(String message) {
-    debugPrint('🚪 Auth request received: $message');
+  // void _handleAuthRequest(String message) {
+  //   debugPrint('🚪 Auth request received: $message');
 
-    if (_currentContext == null) {
-      debugPrint('❌ No context available for auth request');
-      return;
-    }
+  //   if (_currentContext == null) {
+  //     debugPrint('❌ No context available for auth request');
+  //     return;
+  //   }
 
-    if (message == 'logout') {
-      debugPrint('🔄 Processing logout request...');
-      _performLogout();
-    } else {
-      debugPrint('⚠️ Unknown auth request: $message');
-    }
-  }
+  //   if (message == 'logout') {
+  //     debugPrint('🔄 Processing logout request...');
+  //     _performLogout();
+  //   } else {
+  //     debugPrint('⚠️ Unknown auth request: $message');
+  //   }
+  // }
 
-  void _performLogout() async {
-    debugPrint('🚪 Starting logout process...');
+  // void _performLogout() async {
+  //   debugPrint('🚪 Starting logout process...');
 
-    if (_currentContext == null) {
-      debugPrint('❌ No context available for logout');
-      return;
-    }
+  //   if (_currentContext == null) {
+  //     debugPrint('❌ No context available for logout');
+  //     return;
+  //   }
 
-    try {
-      final authService = Provider.of<AuthService>(
-        _currentContext!,
-        listen: false,
-      );
+  //   try {
+  //     final authService = Provider.of<AuthService>(
+  //       _currentContext!,
+  //       listen: false,
+  //     );
 
-      debugPrint('🔄 Calling authService.logout()...');
-      await authService.logout();
+  //     debugPrint('🔄 Calling authService.logout()...');
+  //     await authService.logout();
 
-      debugPrint('✅ Logout successful, using web scripts for feedback...');
+  //     debugPrint('✅ Logout successful, using web scripts for feedback...');
 
-      // Use web scripts instead of native SnackBar
-      if (_currentController != null) {
-        _currentController!.runJavaScript('''
-        if (window.ToastManager) {
-          window.ToastManager.postMessage('toast://' + encodeURIComponent('Logged out successfully'));
-        } else {
-          window.location.href = 'toast://' + encodeURIComponent('Logged out successfully');
-        }
-      ''');
-      }
+  //     // Use web scripts instead of native SnackBar
+  //     if (_currentController != null) {
+  //       _currentController!.runJavaScript('''
+  //       if (window.ToastManager) {
+  //         window.ToastManager.postMessage('toast://' + encodeURIComponent('Logged out successfully'));
+  //       } else {
+  //         window.location.href = 'toast://' + encodeURIComponent('Logged out successfully');
+  //       }
+  //     ''');
+  //     }
 
-      debugPrint('🔄 Navigating to login page...');
+  //     debugPrint('🔄 Navigating to login page...');
 
-      Navigator.of(_currentContext!).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false,
-      );
+  //     Navigator.of(_currentContext!).pushAndRemoveUntil(
+  //       MaterialPageRoute(builder: (context) => const LoginPage()),
+  //       (route) => false,
+  //     );
 
-      debugPrint('✅ Navigation to login page completed');
-    } catch (e) {
-      debugPrint('❌ Error during logout: $e');
+  //     debugPrint('✅ Navigation to login page completed');
+  //   } catch (e) {
+  //     debugPrint('❌ Error during logout: $e');
 
-      // Use web scripts instead of native SnackBar
-      if (_currentController != null) {
-        _currentController!.runJavaScript('''
-        const errorMessage = 'Error during logout';
-        if (window.AlertManager) {
-          window.AlertManager.postMessage('alert://' + encodeURIComponent(errorMessage));
-        } else {
-          window.location.href = 'alert://' + encodeURIComponent(errorMessage);
-        }
-      ''');
-      }
-    }
-  }
+  //     // Use web scripts instead of native SnackBar
+  //     if (_currentController != null) {
+  //       _currentController!.runJavaScript('''
+  //       const errorMessage = 'Error during logout';
+  //       if (window.AlertManager) {
+  //         window.AlertManager.postMessage('alert://' + encodeURIComponent(errorMessage));
+  //       } else {
+  //         window.location.href = 'alert://' + encodeURIComponent(errorMessage);
+  //       }
+  //     ''');
+  //     }
+  //   }
+  // }
 
   void _handleBarcodeRequest(String message) {
     if (_currentContext == null) return;

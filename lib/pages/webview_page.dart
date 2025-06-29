@@ -877,70 +877,119 @@ class _WebViewPageState extends State<WebViewPage> {
       debugPrint('❌ Error handling toast request: $e');
     }
   }
+void _handleNewWebNavigation(String url) {
+  debugPrint('🌐 Opening new WebView layer from WebViewPage: $url');
 
-  void _handleNewWebNavigation(String url) {
-    debugPrint('🌐 Opening new WebView layer from: $url');
+  String targetUrl = 'https://mobile.erpforever.com/';
+  String title = 'Web View'; // Default title
 
-    String targetUrl = 'https://mobile.erpforever.com/';
+  try {
+    if (url.startsWith('new-web://')) {
+      // Remove the protocol
+      String cleanUrl = url.replaceFirst('new-web://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ WebViewPage extracted title: $title');
+          debugPrint('🔗 WebViewPage extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+    }
 
-    if (url.contains('?')) {
+    // Fallback: try old query parameter method
+    if (!url.contains(';') && url.contains('?')) {
       try {
         Uri uri = Uri.parse(url.replaceFirst('new-web://', 'https://'));
         if (uri.queryParameters.containsKey('url')) {
           targetUrl = uri.queryParameters['url']!;
         }
+        if (uri.queryParameters.containsKey('title')) {
+          title = uri.queryParameters['title']!;
+        }
       } catch (e) {
         debugPrint("Error parsing URL parameters: $e");
       }
     }
-
-    // Navigate to another WebViewPage (creating a layer)
-    // Navigate to another WebViewPage (creating a layer)
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WebViewPage(url: targetUrl, title: 'Web View'),
-      ),
-    ).then((_) {
-      // When returning from the new WebViewPage, re-register this controller
-      if (mounted && context.mounted) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          WebViewService().pushController(_controller, context, _pageId);
-        });
-      }
-    });
+  } catch (e) {
+    debugPrint('❌ Error parsing new-web URL in WebViewPage: $e');
   }
 
-  // Handle new-sheet:// navigation - Open CURRENT page in sheet
-  void _handleSheetNavigation(String url) {
-    debugPrint('📋 WebViewPage: Opening current page in sheet: $url');
+  debugPrint('✅ WebViewPage opening new layer with URL: $targetUrl, Title: $title');
 
-    // Use the CURRENT page URL instead of parsing the new-sheet:// URL
-    String targetUrl = widget.url; // Use the current WebViewPage URL
+  // Navigate to another WebViewPage (creating a layer)
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => WebViewPage(url: targetUrl, title: title),
+    ),
+  ).then((_) {
+    // When returning from the new WebViewPage, re-register this controller
+    if (mounted && context.mounted) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        WebViewService().pushController(_controller, context, _pageId);
+      });
+    }
+  });
+}
+ void _handleSheetNavigation(String url) {
+  debugPrint('📋 WebViewPage: Opening sheet from: $url');
 
-    // Only parse parameters if you want to override the current URL
-    if (url.contains('?url=')) {
+  String targetUrl = widget.url; // Use current URL as default
+  String title = widget.title; // Use current title as default
+
+  try {
+    if (url.startsWith('new-sheet://')) {
+      // Remove the protocol
+      String cleanUrl = url.replaceFirst('new-sheet://', '');
+      
+      // Check if there's a title (separated by semicolon)
+      if (cleanUrl.contains(';')) {
+        List<String> parts = cleanUrl.split(';');
+        if (parts.length >= 2) {
+          targetUrl = parts[0].trim();
+          title = parts[1].trim();
+          debugPrint('🏷️ WebViewPage sheet extracted title: $title');
+          debugPrint('🔗 WebViewPage sheet extracted URL: $targetUrl');
+        }
+      } else {
+        targetUrl = cleanUrl;
+      }
+    }
+
+    // Fallback: try old query parameter method
+    if (!url.contains(';') && url.contains('?url=')) {
       try {
         Uri uri = Uri.parse(url.replaceFirst('new-sheet://', 'https://'));
         if (uri.queryParameters.containsKey('url')) {
           targetUrl = uri.queryParameters['url']!;
         }
+        if (uri.queryParameters.containsKey('title')) {
+          title = uri.queryParameters['title']!;
+        }
       } catch (e) {
         debugPrint('❌ Error parsing URL parameters: $e');
       }
     }
-
-    debugPrint('📋 WebViewPage: Opening sheet with CURRENT URL: $targetUrl');
-
-    // Use WebViewService to open the CURRENT page in sheet format
-    WebViewService().navigate(
-      context,
-      url: targetUrl,
-      linkType: 'sheet_webview',
-      title: widget.title, // Use current page title
-    );
+  } catch (e) {
+    debugPrint('❌ Error parsing new-sheet URL in WebViewPage: $e');
   }
 
+  debugPrint('✅ WebViewPage opening sheet with URL: $targetUrl, Title: $title');
+
+  // Use WebViewService to open the sheet
+  WebViewService().navigate(
+    context,
+    url: targetUrl,
+    linkType: 'sheet_webview',
+    title: title,
+  );
+}
   void _injectScrollMonitoring() {
     _controller.runJavaScript('''
       (function() {
